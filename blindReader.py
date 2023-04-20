@@ -4,6 +4,10 @@ import numpy as np
 from PIL import Image as im
 #from scipy.ndimage import interpolation as inter
 from PIL import Image,ImageEnhance,ImageFilter
+import pygame
+
+
+
 camera = PiCamera()
 camera_config = camera.create_still_configuration(lores={"size":(1200,1200)}, display='lores')
 camera.configure(camera_config)
@@ -23,7 +27,7 @@ import pytesseract
 def ocr(image):
 	custom_config =r'--oem 3 --psm 6'
 	string = pytesseract.image_to_string(image, lang = 'amh')
-	print(string)
+	return string
 
 def alignImage(img):
 	ref_image = cv2.imread("ref.png")
@@ -137,10 +141,22 @@ def removeObjects(image):
 	cv2.imwrite("thres.png", thresh)
 	cv2.imwrite("dilate.png", dilate)
 	cv2.imwrite("mask.png", mask)
+def readLoud(string):
+	pygame.mixer.init()
+	print(string)
+	for s in string:
+		print(s)
+		if s==" ":
+			s="sp"
+		sound = pygame.mixer.Sound("soundData/splitted_sound/"+s+".wav")
+		playing = sound.play()
+		while playing.get_busy():
+			pygame.time.delay(10)
 image = enhanceSharpness(Image.fromarray(output))
 image = np.array(image)
 
 #image = deskew(image)
 removeObjects(image)
-#ocr(image)
+string  = ocr(image)
+readLoud(string[:10])
 cv2.imwrite("corrected.png",image)
