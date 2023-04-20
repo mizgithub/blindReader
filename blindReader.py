@@ -5,24 +5,24 @@ from PIL import Image as im
 #from scipy.ndimage import interpolation as inter
 from PIL import Image,ImageEnhance,ImageFilter
 camera = PiCamera()
-camera_config = camera.create_still_configuration(lores={"size":(920,720)}, display='lores')
+camera_config = camera.create_still_configuration(lores={"size":(1200,1200)}, display='lores')
 camera.configure(camera_config)
 camera.start_preview(Preview.QTGL)
 camera.start()
-time.sleep(3)
+time.sleep(5)
 #camera.capture_file("test.png")
 output = camera.capture_array('lores')
 
 import cv2
 #cv2.imshow("pic",output)
 output = cv2.rotate(output, cv2.ROTATE_90_COUNTERCLOCKWISE)
-output = output[10:1000, 10:700]
+output = output[20:1180, 20:1180]
 cv2.imwrite("test2.png",output)
 output = cv2.imread("test2.png")
 import pytesseract
 def ocr(image):
 	custom_config =r'--oem 3 --psm 6'
-	string = pytesseract.image_to_string(image,config = custom_config)
+	string = pytesseract.image_to_string(image, lang = 'amh')
 	print(string)
 
 def alignImage(img):
@@ -119,9 +119,28 @@ def deskew(image):
 	M = cv2.getRotationMatrix2D(center, angle, 1.0)
 	rotated = cv2.warpAffine(image, M, (w, h),flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
 	return rotated
+def removeObjects(image):
+	mask = np.ones(image.shape, dtype=np.uint8) * 255
+	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+	thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+	kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+	dilate = cv2.dilate(thresh, kernel, iterations=3)
+
+	cnts = cv2.findContours(dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+	for c in cnts:
+		area = cv2.contourArea(c)
+		if area < 10000:
+			x,y,w,h = cv2.boundingRect(c)
+			mask[y:y+h, x:x+w] = image[y:y+h, x:x+w]
+	
+	cv2.imwrite("thres.png", thresh)
+	cv2.imwrite("dilate.png", dilate)
+	cv2.imwrite("mask.png", mask)
 image = enhanceSharpness(Image.fromarray(output))
 image = np.array(image)
 
-image = deskew(image)
-ocr(image)
+#image = deskew(image)
+removeObjects(image)
+#ocr(image)
 cv2.imwrite("corrected.png",image)
