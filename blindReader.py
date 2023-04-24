@@ -7,6 +7,10 @@ from PIL import Image,ImageEnhance,ImageFilter
 import pygame
 
 
+## loading alphabets
+alphabets_file = open(r"soundData/Amharic_alphabets.txt", encoding="utf-8")
+alphabets = alphabets_file.read()
+alphabets = alphabets.replace("\n","")
 
 camera = PiCamera()
 camera_config = camera.create_still_configuration(lores={"size":(1200,1200)}, display='lores')
@@ -145,12 +149,12 @@ def readLoud(string):
 	pygame.mixer.init()
 	for s in string:
 		print(s)
-		if s==" ":
+		if not(s in alphabets) or s==" " or "":
 			s="sp"
-		sound = pygame.mixer.Sound("soundData/splitted_sound/"+s+".wav")
+		sound = pygame.mixer.Sound("soundData/splitted_sound_2/"+s+".wav")
 		playing = sound.play()
 		while playing.get_busy():
-			pygame.time.delay(10)
+			pygame.time.delay(int(sound.get_length()))
 image = enhanceSharpness(Image.fromarray(output))
 image = np.array(image)
 
