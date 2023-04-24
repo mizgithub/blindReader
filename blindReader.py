@@ -5,6 +5,8 @@ from PIL import Image as im
 #from scipy.ndimage import interpolation as inter
 from PIL import Image,ImageEnhance,ImageFilter
 import pygame
+import pytesseract
+import cv2
 
 
 ## loading alphabets
@@ -12,22 +14,21 @@ alphabets_file = open(r"soundData/Amharic_alphabets.txt", encoding="utf-8")
 alphabets = alphabets_file.read()
 alphabets = alphabets.replace("\n","")
 
-camera = PiCamera()
-camera_config = camera.create_still_configuration(lores={"size":(1200,1200)}, display='lores')
-camera.configure(camera_config)
-camera.start_preview(Preview.QTGL)
-camera.start()
-#time.sleep(5)
-#camera.capture_file("test.png")
-output = camera.capture_array('lores')
-
-import cv2
 #cv2.imshow("pic",output)
-output = cv2.rotate(output, cv2.ROTATE_90_COUNTERCLOCKWISE)
-output = output[20:1180, 20:1180]
-cv2.imwrite("test2.png",output)
-output = cv2.imread("test2.png")
-import pytesseract
+def capture_image():
+	camera = PiCamera()
+	camera_config = camera.create_still_configuration(lores={"size":(1200,1200)}, display='lores')
+	camera.configure(camera_config)
+	#camera.start_preview(Preview.QTGL)
+	camera.start()
+	#time.sleep(5)
+	#camera.capture_file("test.png")
+	output = camera.capture_array('lores')
+	output = cv2.rotate(output, cv2.ROTATE_90_COUNTERCLOCKWISE)
+	output = output[20:1180, 20:1180]
+	cv2.imwrite("test2.png",output)
+	output = cv2.imread("test2.png")
+	return output
 def ocr(image):
 	custom_config =r'--oem 3 --psm 6'
 	string = pytesseract.image_to_string(image, lang = 'amh')
@@ -152,14 +153,16 @@ def readLoud(string):
 		if not(s in alphabets) or s==" " or "":
 			s="sp"
 		sound = pygame.mixer.Sound("soundData/splitted_sound_2/"+s+".wav")
+		
 		playing = sound.play()
 		while playing.get_busy():
-			pygame.time.delay(int(sound.get_length()))
+			pass
+output = capture_image()
 image = enhanceSharpness(Image.fromarray(output))
 image = np.array(image)
 
-#image = deskew(image)
+image = deskew(image)
 removeObjects(image)
 string  = ocr(image)
 readLoud(string[:10])
-cv2.imwrite("corrected.png",image)
+#cv2.imwrite("corrected.png",image)
