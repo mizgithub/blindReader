@@ -13,7 +13,7 @@ camera_config = camera.create_still_configuration(lores={"size":(1200,1200)}, di
 camera.configure(camera_config)
 camera.start_preview(Preview.QTGL)
 camera.start()
-time.sleep(5)
+#time.sleep(5)
 #camera.capture_file("test.png")
 output = camera.capture_array('lores')
 
@@ -143,7 +143,6 @@ def removeObjects(image):
 	cv2.imwrite("mask.png", mask)
 def readLoud(string):
 	pygame.mixer.init()
-	print(string)
 	for s in string:
 		print(s)
 		if s==" ":
